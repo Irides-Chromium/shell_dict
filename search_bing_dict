@@ -1,0 +1,15 @@
+#!/bin/bash
+
+while true
+do
+    if [ $1 ]
+    then word=$1
+    else read word
+    fi
+    result=`curl -s http://cn.bing.com/dict/?q=${word} | grep -o '<ul><li><span class="pos">.*<\/span><\/li><\/ul>' | sed 's/<\/span><\/span><\/li><li><span class="pos web">网络<\/span><span class="def"><span>/;/' | sed 's/<\/span><\/span><\/li><\/ul>//' | sed 's/<ul><li><span class="pos">.*<\/span><span class="def"><span>//'`
+    echo $result
+    if [ $1 ]
+    then break
+    else echo '--------------------------------------------------------------------------------'
+    fi
+done

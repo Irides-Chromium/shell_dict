@@ -2,21 +2,32 @@
 
 while true
 do
-    trap 'echo -e "\e[0m"; exit 1;' INT
-    if [ $1 ]
+    trap 'echo -e "\e[0m"; trap - INT; exit 1;' INT
+    if [ "${1}" ]
     then
-        if [ $1 != *-n* ]
-        then
-            g=$(($RANDOM % 255))
-            f=$(($RANDOM % 255))
-            b=$(($RANDOM % 255))
-            echo -en "\e[38;2;${f};${g};${b}m"
-        fi
-        word=$1
-    else read word
+        case "${1}" in
+            -a)
+                result=`curl -s http://cn.bing.com/dict/?q=${2} | grep -o '<ul><li><span class="pos">.*<\/span><\/li><\/ul>'`
+                echo -e "\e[1;31m$result\e[0m"
+                exit 1;;
+            *)
+                ;;
+        esac
+    else
+        g=$(($RANDOM % 255))
+        f=$(($RANDOM % 255))
+        b=$(($RANDOM % 255))
+        echo -en "\e[38;2;${f};${g};${b}m"
+        read word
     fi
+    word=`echo "${word}" | tr ' ' '+'`
     result=`curl -s http://cn.bing.com/dict/?q=${word} | grep -o '<ul><li><span class="pos">.*<\/span><\/li><\/ul>' | sed 's/<\/span><\/span><\/li><li><span class="pos web">网络<\/span><span class="def"><span>/;/' | sed 's/<\/span><\/span><\/li><\/ul>//' | sed 's/<ul><li><span class="pos">.*<\/span><span class="def"><span>//'`
-    echo $result
+    if [ "$result" == "" ]
+    then echo -e "\e[1;31mNo result found.\e[0m"
+    else
+        echo $result
+        echo -e "${word}\t\t\t\t${result}" >> "./history"
+    fi
     echo -en "\e[0m"
     if [ $1 ]
     then break

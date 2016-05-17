@@ -56,7 +56,7 @@ main(){
     do
         random_color
         read word
-        search_save $word
+        search_save "$word"
         echo -en "\x1b[0m"
         seperate_line
     done
@@ -73,7 +73,7 @@ then
             usage
             ;;
         *)
-            search_save $1
+            search_save "$1"
             ;;
     esac
 else

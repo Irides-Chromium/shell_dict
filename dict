@@ -1,10 +1,13 @@
 #!/bin/bash
 
 usage(){
-    echo "Usage: enter ./dict to open search and enter any word you want, on press of"
-    echo "[Enter], it will help you look up Bing and show it up."
-    echo 
-    echo "Or use parameter to give it a word as \"./dict \$word\"."
+    echo "Usage: $0 [option] [word]"
+    echo "Options:"
+    echo "      -h      Show this message and exit."
+    echo "      -c      Show how many words (lines) are stored."
+    echo "      -a      For debug use."
+    echo
+    echo "It will help you look up Bing for the word and show it up."
 }
 
 random_color(){
@@ -71,6 +74,9 @@ then
             ;;
         -h)
             usage
+            ;;
+        -c)
+            echo "$(wc -l ~/Desktop/Voca) words in total."
             ;;
         *)
             search_save "$1"

@@ -11,9 +11,9 @@ usage(){
 }
 
 random_color(){
-    g=$(($RANDOM % 255))
-    f=$(($RANDOM % 255))
-    b=$(($RANDOM % 255))
+    g=$(($RANDOM % 200 + 56))
+    f=$(($RANDOM % 200 + 56))
+    b=$(($RANDOM % 200 + 56))
     echo -en "\e[38;2;${f};${g};${b}m"
 }
 
@@ -76,7 +76,7 @@ then
             usage
             ;;
         -c)
-            echo "$(wc -l ~/Desktop/Voca) words in total."
+            echo "$(wc -l ~/Desktop/Voca | awk '{print $1}') words in total."
             ;;
         *)
             search_save "$1"

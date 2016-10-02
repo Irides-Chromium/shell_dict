@@ -9,7 +9,7 @@ usage(){
     echo "      -c      Show how many words (lines) are stored."
     echo "      -a      For debug use."
     echo "      -y      Look up youdao instead of Bing."
-    echo "      {word}  Do a quick search of {word}."
+    echo "      {word}  Do a quick search of {word} and exit."
     echo
     echo "You can use $0 without option to start the interactive mode."
 }
@@ -22,11 +22,8 @@ random_color(){
 }
 
 seperate_line(){
-    col=`echo $(tput cols)`
-    for i in $(seq ${col})
-    do
-	    echo -n "-"
-    done
+    col=`tput cols`
+    for i in `seq $col`; do echo -n "-"; done
     echo
 }
 
@@ -61,7 +58,7 @@ main(){
     fi
     echo -en "\e[1;36mWait... not ready connected to the Server.\e[0m"
     start=`date +%s%N`
-    time=`ping -c 1 -q $SERVER | tail -n 1 | awk ' BEGIN { FS="/" } { print $5 }'`
+    time=`ping -c 1 -q $SERVER | tail -n 1 | awk 'BEGIN { FS="/" } { print $5 }'`
     mid=`date +%s%N`
     test=`curl -s $QUERY_SERVER`
     delta1=$((($mid - $start) / 1000000))

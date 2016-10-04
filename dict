@@ -5,11 +5,11 @@ usage(){
     echo "Usage: $0 [option] [word]"
     echo "It will help you look up Bing for the word and show it up."
     echo "Options:"
-    echo "      -h      Show this message and exit."
-    echo "      -c      Show how many words (lines) are stored."
-    echo "      -a      For debug use."
-    echo "      -y      Look up youdao instead of Bing."
-    echo "      {word}  Do a quick search of {word} and exit."
+    echo "      -h, --help      Show this message and exit."
+    echo "      -c, --count     Show how many words (lines) are stored."
+    echo "      -d, --debug     For debug use."
+    echo "      -y, --youdao    Look up youdao instead of Bing."
+    echo "      {word}          Do a quick search of {word} and exit."
     echo
     echo "You can use $0 without option to start the interactive mode."
 }
@@ -18,7 +18,7 @@ random_color(){
     g=$(($RANDOM % 200 + 56))
     f=$(($RANDOM % 200 + 56))
     b=$(($RANDOM % 200 + 56))
-    echo -en "\e[38;2;${f};${g};${b}m"
+    echo -en "\e[38;2;$f;$g;${b}m"
 }
 
 seperate_line(){
@@ -31,13 +31,13 @@ search_save(){
     METHOD=get_bing
     if [ ! $DEFAULT ]; then METHOD=get_youdao; fi
     word=`echo $1 | tr [A-Z] [a-z]`
-    query=`echo "${word}" | tr ' ' '+'`
+    query=`echo "$word" | tr ' ' '+'`
     result=`$METHOD "$query" | sed 's/\./. /g'`
     if [ "$result" == "" ]
     then echo -e "\e[1;31mNo result found.\e[0m"
     else
         echo $result | sed 's/^@//' | tr '@' '\012'
-        printf "%-30s%s\n" "${query}" "${result}" | sed 's/^@//' | tr '@' ' ' >> "${HOME}/Desktop/Voca"
+        printf "%-30s%s\n" "$word" "$result" | sed 's/^@//' | tr '@' ' ' >> "$HOME/Desktop/Voca"
     fi
 }
 
@@ -47,6 +47,15 @@ get_bing(){
 
 get_youdao(){
     curl -s http://dict.youdao.com/w/eng/"$1"/ | sed -n '/<div class="trans-container">/,/<\/div>/p' | grep '<li>.*<\/li>' | sed -e 's/<\/\?li>//g' -e 's/ //g' | tr '\n' '@' | sed 's/@$//'
+}
+
+quick_search(){
+    while [ "$@" ]; do
+        echo $"$1"
+        search_save "$1"
+        seperate_line
+        shift
+    done
 }
 
 main(){
@@ -63,7 +72,7 @@ main(){
     test=`curl -s $QUERY_SERVER`
     delta1=$((($mid - $start) / 1000000))
     delta2=$(((`date +%s%N` - $mid) / 1000000))
-    if [ "${test}" ]; then
+    if [ "$test" ]; then
         echo -e "\r\e[1;31mReady to help you look up the word. Reach/Ping/Curl time: $delta1/$time/${delta2}ms.\e[0m"
     fi
     trap 'echo -e "\e[0m"; trap - INT; exit 2;' INT
@@ -79,21 +88,22 @@ main(){
 }
 
 # Parameter
-export USAGE=
-export COUNT=
-export QUICK=
-export DEBUG=
+USAGE=
+COUNT=
+QUICK=
+DEBUG=
+WORD=
 export DEFAULT=1
 
 if [ "$1" ]
 then
-    while [ $@ ]; do
+    while [ "$1" ]; do
         case "$1" in
-            -a) DEBUG=1  ;;
-            -h) USAGE=1  ;;
-            -c) COUNT=1  ;;
-            -y) DEFAULT= ;;
-            *) QUICK=1   ;;
+            -d | --debug) DEBUG=1  ;;
+            -h | --help) USAGE=1  ;;
+            -c | --count) COUNT=1  ;;
+            -y | --youdao) DEFAULT= ;;
+            *) QUICK=1; WORD="$1"  ;;
         esac
         shift
     done
@@ -101,7 +111,7 @@ fi
 
 if [ $USAGE ]; then usage
 elif [ $COUNT ]; then echo "$(wc -l ~/Desktop/Voca | awk '{print $1}') words in total."
-elif [ $DEBUG ]; then result=`curl -s http://cn.bing.com/dict/?q=${2} | grep -o '<ul><li><span class="pos">.*<\/span><\/li><\/ul>'`
-elif [ $QUICK ]; then search_save "$1"
+elif [ $DEBUG ]; then result=`curl -s http://cn.bing.com/dict/?q=$2 | grep -o '<ul><li><span class="pos">.*<\/span><\/li><\/ul>'`
+elif [ $QUICK ]; then search_save $WORD
 else main
 fi

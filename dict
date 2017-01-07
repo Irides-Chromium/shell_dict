@@ -9,6 +9,7 @@ usage(){
     echo "      -c, --count     Show how many words (lines) are stored."
     echo "      -d, --debug     For debug use."
     echo "      -y, --youdao    Look up youdao instead of Bing."
+    echo "          -l {lang}   Use {lang} instead of English in youdao."
     echo "      {word}          Do a quick search of {word} and exit."
     echo
     echo "You can use $0 without option to start the interactive mode."
@@ -27,12 +28,12 @@ seperate_line(){
     echo
 }
 
-search_save(){
+search_web(){
     METHOD=get_bing
     if [ ! $DEFAULT ]; then METHOD=get_youdao; fi
     word=`echo $1 | tr [A-Z] [a-z]`
     query=`echo "$word" | tr ' ' '+'`
-    result=`$METHOD "$query" | sed 's/\./. /g'`
+    result=`$METHOD "$query" "$LANG" | sed 's/\./. /g'`
     if [ "$result" == "" ]
     then echo -e "\e[1;31mNo result found.\e[0m"
     else
@@ -41,12 +42,29 @@ search_save(){
     fi
 }
 
+search_local(){
+    line=$(cat ~/Desktop/Voca | grep "$1" | tail -n1)
+    if [ -n "$line" ]; then
+        echo $line | grep -o '\(web: \|\w\{1,3\}\. \?\)[^ ]*'
+        return 0
+    else
+        return 1
+    fi
+}
+
+search_save(){
+    search_local $1
+    if [ $? -ne 0 ]; then
+        search_web $1
+    fi
+}
+
 get_bing(){
     curl -s http://cn.bing.com/dict/?q="$1" | grep -o '<ul><li><span class="pos.*">.*<\/span><\/li><\/ul>' | sed 's/<span class="pos web">网络<\/span><span class="def"><span>/@web: /' | sed -e 's/<span class="pos">/@/g' -e 's/<span class="pos web">//g' | sed 's/<span class="def">//g' | sed -e 's/span//g' -e 's/ul//g' -e 's/li//g' | tr -d '<>/'
 }
 
 get_youdao(){
-    curl -s http://dict.youdao.com/w/eng/"$1"/ | sed -n '/<div class="trans-container">/,/<\/div>/p' | grep '<li>.*<\/li>' | sed -e 's/<\/\?li>//g' -e 's/ //g' | tr '\n' '@' | sed 's/@$//'
+    curl -s http://dict.youdao.com/w/${2-eng}/"$1"/ | sed -n '/<div class="trans-container">/,/<\/div>/p' | grep '<li>.*<\/li>' | sed -e 's/<\/\?li>//g' -e 's/ //g' | tr '\n' '@' | sed 's/@$//'
 }
 
 quick_search(){
@@ -81,9 +99,11 @@ main(){
     do
         random_color
         read word
-        search_save "$word"
-        echo -en "\e[0m"
-        seperate_line
+        if [ -n "$word" ]; then
+            search_save "$word"
+            echo -en "\e[0m"
+            seperate_line
+        fi
     done
 }
 
@@ -94,16 +114,18 @@ QUICK=
 DEBUG=
 WORD=
 export DEFAULT=1
+export LANG="eng"
 
 if [ "$1" ]
 then
     while [ "$1" ]; do
         case "$1" in
-            -d | --debug) DEBUG=1  ;;
-            -h | --help) USAGE=1  ;;
-            -c | --count) COUNT=1  ;;
+            -d | --debug)  DEBUG=1  ;;
+            -h | --help)   USAGE=1  ;;
+            -c | --count)  COUNT=1  ;;
             -y | --youdao) DEFAULT= ;;
-            *) QUICK=1; WORD="$1"  ;;
+            -l | --lang)   LANG=$2; shift ;;
+            *) QUICK=1; WORD="$1"   ;;
         esac
         shift
     done
@@ -115,3 +137,5 @@ elif [ $DEBUG ]; then result=`curl -s http://cn.bing.com/dict/?q=$2 | grep -o '<
 elif [ $QUICK ]; then search_save $WORD
 else main
 fi
+# Search local
+# Split different entries: `grep -o '\(web: \|\w\{1,3\}\. \?\)[^ ]*'`

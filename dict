@@ -43,7 +43,7 @@ search_web(){
 }
 
 search_local(){
-    line=$(cat ~/Desktop/Voca | grep "$1" | tail -n1)
+    line=$(cat ~/Desktop/Voca | grep "\<$1\>" | tail -n1)
     if [ -n "$line" ]; then
         echo $line | grep -o '\(web: \|\w\{1,3\}\. \?\)[^ ]*'
         return 0
@@ -137,5 +137,3 @@ elif [ $DEBUG ]; then result=`curl -s http://cn.bing.com/dict/?q=$2 | grep -o '<
 elif [ $QUICK ]; then search_save $WORD
 else main
 fi
-# Search local
-# Split different entries: `grep -o '\(web: \|\w\{1,3\}\. \?\)[^ ]*'`
